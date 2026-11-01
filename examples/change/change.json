@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "EXAMPLE-READONLY-LIST",
+  "level": "standard",
+  "status": "draft",
+  "spec": "spec.md",
+  "requirements": [{"id": "R-01", "text": "授权用户仅可读取自己范围内的项目摘要"}],
+  "tasks": [
+    {"id": "T-01", "requirements": ["R-01"], "status": "todo"},
+    {"id": "T-02", "requirements": ["R-01"], "status": "todo"}
+  ],
+  "acceptance": [{"id": "A-01", "requirements": ["R-01"], "result": "not-run", "evidence": []}]
+}

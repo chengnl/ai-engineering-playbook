@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "CHANGE_ID",
+  "level": "standard",
+  "status": "draft",
+  "spec": "spec.md",
+  "requirements": [{"id": "R-01", "text": "待填写可观察行为"}],
+  "tasks": [{"id": "T-01", "requirements": ["R-01"], "status": "todo"}],
+  "acceptance": [{"id": "A-01", "requirements": ["R-01"], "result": "not-run", "evidence": []}]
+}

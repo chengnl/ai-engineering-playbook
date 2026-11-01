@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "project_name": "REPLACE_PROJECT_NAME",
+  "playbook_version": "0.1.0",
+  "status": "needs-adaptation",
+  "stack": {"backend": "待确认", "frontend": "待确认", "database": "待确认"},
+  "knowledge_entry": "docs/README.md",
+  "business_boundaries": ["待补：业务范围、角色与数据范围、保留行为"],
+  "environment_policy": "待补：开发/测试/生产的访问与操作授权；不填写凭据",
+  "git_policy": "待补：分支、评审、提交/推送/合并授权；tag按项目要求",
+  "ci_policy": "待补：自动/手工/本地检查，初始化不会配置CI",
+  "test_resource_cleanup": "待补：隔离资源命名、清理及残留复查",
+  "exceptions": [],
+  "checks": {"offline": [], "database": [], "browser": [], "release-tools": []}
+}
