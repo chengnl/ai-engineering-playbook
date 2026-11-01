@@ -6,6 +6,8 @@ from pathlib import Path
 import re
 import sys
 from urllib.parse import unquote, urlsplit
+from evidence import evidence_errors
+from project_contract import load_profile, local_path, source_state, text
 
 SKIP = {'.git', '.venv', 'node_modules', '__pycache__', 'var', 'output'}
 
@@ -36,7 +38,7 @@ def check_docs(root):
     return errors
 
 
-def trace_errors(path):
+def trace_errors(path, project=None):
     path = Path(path).resolve()
     try:
         data = json.loads(path.read_text())
@@ -45,7 +47,7 @@ def trace_errors(path):
     errors = []
     if not isinstance(data, dict):
         return ['trace must be an object']
-    if type(data.get('schema_version')) is not int or data.get('schema_version') != 1:
+    if type(data.get('schema_version')) is not int or data.get('schema_version') != 2:
         errors.append('unsupported schema_version')
     if not isinstance(data.get('id'), str) or not data['id'].strip():
         errors.append('change id is required')
@@ -58,8 +60,10 @@ def trace_errors(path):
     def local_file(value):
         if not isinstance(value, str) or not value:
             return False
-        candidate = (path.parent / value).resolve()
-        return not Path(value).is_absolute() and candidate.is_relative_to(path.parent) and candidate.is_file() and not (path.parent / value).is_symlink()
+        try:
+            return bool(local_path(path.parent, value))
+        except (OSError, ValueError):
+            return False
 
     if not local_file(data.get('spec')):
         errors.append('spec must reference an existing local file')
@@ -101,6 +105,21 @@ def trace_errors(path):
         if requirements - covered[key]:
             errors.append(f'{key}: requirements without coverage: {sorted(requirements-covered[key])}')
     completed = data.get('status') == 'completed'
+    expected_source = None
+    if project is not None:
+        try:
+            expected_source = source_state(project, load_profile(project))
+        except (OSError, ValueError, TypeError) as error:
+            errors.append('project validation failed: ' + str(error))
+    elif completed:
+        errors.append('completed changes require --project for source/config binding')
+    if data.get('status') in ['ready', 'implementing', 'completed']:
+        for row in rows['requirements']:
+            if not text(row.get('text')):
+                errors.append(row['id'] + ': requirement is still a placeholder')
+    spec_path = path.parent / data['spec'] if local_file(data.get('spec')) else None
+    if spec_path and not spec_path.read_text().strip():
+        errors.append('specification cannot be empty')
     for task in rows['tasks']:
         if not isinstance(task.get('status'), str) or task.get('status') not in {'todo', 'doing', 'blocked', 'done'}:
             errors.append(f"{task['id']}: invalid task status")
@@ -119,8 +138,18 @@ def trace_errors(path):
         if completed and result != 'passed':
             errors.append(f"{acceptance['id']}: completed change requires passed acceptance")
         for item in evidence:
-            if not local_file(item):
-                errors.append(f"{acceptance['id']}: missing/outside evidence file")
+            if not isinstance(item, dict) or item.get('kind') not in ['automated', 'manual'] or not local_file(item.get('path')):
+                errors.append(f"{acceptance['id']}: structured local evidence reference required")
+                continue
+            record_path = path.parent / item['path']
+            record_errors = evidence_errors(record_path, spec_path, expected_source)
+            errors += [acceptance['id'] + ': ' + e for e in record_errors]
+            try:
+                record = json.loads(record_path.read_text())
+                if record.get('kind') != item['kind'] or (item['kind'] == 'automated' and (not text(item.get('check_id')) or item.get('check_id') != record.get('command_id'))):
+                    errors.append(acceptance['id'] + ': evidence kind/check ID mismatch')
+            except (OSError, ValueError, AttributeError):
+                pass
     return errors
 
 
@@ -128,10 +157,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--docs', type=Path)
     parser.add_argument('--trace', type=Path)
+    parser.add_argument('--project', type=Path, help='validate project readiness and bind completed evidence to current source scope')
     args = parser.parse_args()
-    if not args.docs and not args.trace:
+    if not args.docs and not args.trace and not args.project:
         parser.error('provide --docs and/or --trace')
-    errors = (check_docs(args.docs) if args.docs else []) + (trace_errors(args.trace) if args.trace else [])
+    errors = (check_docs(args.docs) if args.docs else []) + (trace_errors(args.trace, args.project) if args.trace else [])
+    if args.project and not args.trace:
+        try:
+            load_profile(args.project)
+        except (OSError, ValueError, TypeError) as error:
+            errors.append(str(error))
     if errors:
         print('\n'.join(errors), file=sys.stderr)
         return 1

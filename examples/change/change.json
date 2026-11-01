@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "id": "EXAMPLE-READONLY-LIST",
   "level": "standard",
   "status": "draft",

@@ -2,7 +2,7 @@
 
 AI工程研发规范与实践模板。把“先明确行为、再实现、用证据验收、同步知识”落实到可版本化的仓库文件，适用于AI辅助研发的新项目及已有项目。
 
-当前版本：**0.1.0**。Python **3.10+**，仅标准库，无需安装第三方包。没有模型调用、云端依赖、自动部署或默认启用的CI。
+当前版本：**0.2.0**。Python **3.10+**，仅标准库，无需安装第三方包。没有模型调用、云端依赖、自动部署或默认启用的CI。
 
 ## 从哪里开始
 
@@ -33,7 +33,7 @@ python3 .engineering/tools/check.py --docs .engineering
 python3 .engineering/tools/verify.py --project . --group offline
 ```
 
-建立实际变更记录后，可增加`--trace specs/changes/<id>/change.json`检查对应关系；初始化不会自动生成已完成的业务规格。检查命令默认未配置，verify会非零退出，**不会空跑后显示成功**。
+建立实际变更记录后，使用`--trace specs/changes/<id>/change.json --project .`检查需求与结构化证据绑定；初始化不会自动生成已完成的业务规格。检查命令默认未配置，verify会非零退出，**不会空跑后显示成功**。
 
 ## 内容
 
@@ -42,10 +42,18 @@ python3 .engineering/tools/verify.py --project . --group offline
 | standards/ | [协作](standards/collaboration.md)、[Java](standards/java.md)、[前端](standards/frontend.md)、[数据库](standards/database.md)、[测试](standards/testing.md)、[安全与运行](standards/security-operations.md) |
 | workflows/ | [轻量SDD总流程](workflows/sdd.md)、[开发/修复/重构](workflows/development.md)、[集成/发布](workflows/integration-release.md) |
 | templates/ | AI入口、项目情况、变更规格/追踪、技术决策、验收、发布和知识入口模板 |
-| tools/ | 安全接入、Markdown相对文件链接与需求追踪检查、本地检查命令执行 |
-| examples/ | [完整小例子](examples/change/README.md)，含需求—任务—验收—测试对应 |
+| tools/ | 安全接入、项目契约、优雅退出/清理、结构化证据、链接/需求追踪检查 |
+| adapters/ | [Java/Spring、前端、PostgreSQL可选适配](adapters/README.md)，不自动安装或连接数据库 |
+| examples/ | [draft结构示例](examples/change/README.md)及[真实执行的完整教学闭环](examples/complete/README.md) |
 | tests/ | 工具的离线回归，临时文件自动清理 |
 | docs/ | 接入说明、架构、检查能力与边界、版本维护、实际验收 |
+
+## v0.2使用要点
+
+- 项目和追踪契约采用schema 2，ready会检查完整资料；技术/检查组不适用须写理由。
+- 超时先TERM宽限再强杀；隔离资源始终执行清理和残留检查，失败不能通过。
+- 自动生成实际命令、环境、时间、源码/规格摘要及资源结果的JSON证据；拒绝空记录及过期证据。
+- [v0.1迁移说明](docs/maintenance.md)；不覆盖既有包，不将旧证据伪装为本轮通过。
 
 ## 验证本仓库
 

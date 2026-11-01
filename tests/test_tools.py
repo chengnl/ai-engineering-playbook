@@ -1,12 +1,14 @@
 import copy
 import importlib.util
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from support import project, write, command, evidence
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -105,6 +107,16 @@ class BootstrapTests(unittest.TestCase):
             bootstrap.bootstrap(self.dest, 'sample')
         self.assertEqual('another initializer', lock.read_text())
 
+    def test_adapter_runtime_caches_are_never_bundled(self):
+        source = self.base / 'source'
+        shutil.copytree(ROOT, source, ignore=shutil.ignore_patterns('.git', '__pycache__', 'var', 'output'))
+        cache = source / 'adapters/frontend/__pycache__'
+        cache.mkdir(parents=True)
+        (cache/'fake.pyc').write_bytes(b'not-source')
+        with patch.object(bootstrap, 'SOURCE', source):
+            bootstrap.bootstrap(self.dest, 'sample')
+        self.assertFalse(any(self.dest.rglob('*.pyc')))
+
     def test_invalid_name_rejected(self):
         with self.assertRaises(ValueError):
             bootstrap.bootstrap(self.dest, 'bad\nname')
@@ -115,14 +127,16 @@ class TraceTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.base = Path(self.temp.name).resolve()
-        (self.base / 'spec.md').write_text('# feature')
+        self.cfg = project(self.base)
+        (self.base / 'spec.md').write_text('# feature: authorized read')
         (self.base / 'evidence.md').write_text('synthetic fixture, not a production result')
         self.data = json.loads((ROOT / 'templates/change.json').read_text())
+        self.data['requirements'][0]['text'] = 'Read only records within authorized scope'
         self.path = self.base / 'change.json'
 
     def errors(self, data=None):
         self.path.write_text(json.dumps(self.data if data is None else data))
-        return check.trace_errors(self.path)
+        return check.trace_errors(self.path, self.base)
 
     def test_draft_requires_structure_but_not_passed_evidence(self):
         self.assertEqual([], self.errors())
@@ -131,7 +145,7 @@ class TraceTests(unittest.TestCase):
         self.data['status'] = 'completed'
         self.assertTrue(self.errors())
         self.data['tasks'][0]['status'] = 'done'
-        self.data['acceptance'][0].update(result='passed', evidence=['evidence.md'])
+        self.data['acceptance'][0].update(result='passed', evidence=[evidence(self.base)])
         self.assertEqual([], self.errors())
 
     def test_unknown_and_uncovered_requirements_rejected(self):
@@ -183,14 +197,14 @@ class VerifyTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.base = Path(self.temp.name).resolve()
-        (self.base / '.engineering').mkdir()
-        self.cfg = {'status': 'ready', 'checks': {'offline': []}}
+        self.cfg = project(self.base)
+        self.cfg['checks']['offline'] = []
 
     def write(self):
-        (self.base / '.engineering/project.json').write_text(json.dumps(self.cfg))
+        write(self.base, self.cfg)
 
     def command(self, code):
-        return {'argv': [sys.executable, '-c', code], 'timeout_seconds': 5, 'purpose': 'isolated synthetic test'}
+        return command(code)
 
     def test_unconfigured_and_unadapted_project_cannot_pass(self):
         self.write()
@@ -209,13 +223,13 @@ class VerifyTests(unittest.TestCase):
         self.assertEqual('ok', (self.base / 'marker').read_text())
 
     def test_nonzero_stops_following_commands(self):
-        self.cfg['checks']['offline'] = [self.command('raise SystemExit(3)'), self.command("open('bad','w').close()")]
+        self.cfg['checks']['offline'] = [self.command('raise SystemExit(3)'), {**self.command("open('bad','w').close()"), 'id': 'must-not-run'}]
         self.write()
         self.assertEqual(1, verify.run_checks(self.base, 'offline'))
         self.assertFalse((self.base / 'bad').exists())
 
     def test_all_preflight_rejects_missing_group_before_any_command(self):
-        self.cfg['checks'] = {'offline': [self.command("open('bad','w').close()")], 'database': []}
+        self.cfg['checks'] = {'offline': [{**self.command("open('bad','w').close()"), 'id': 'must-not-run'}], 'database': []}
         self.write()
         with self.assertRaises(ValueError):
             verify.run_checks(self.base, 'all')

@@ -25,13 +25,15 @@ def bootstrap(destination, name, no_agent_entry=False):
         raise ValueError("destination is not a directory")
     version = (SOURCE / 'VERSION').read_text().strip()
     payload = {}
-    for folder in ['standards', 'workflows', 'templates']:
+    for folder in ['standards', 'workflows', 'templates', 'adapters']:
         for src in (SOURCE / folder).rglob('*'):
+            if '__pycache__' in src.parts or src.suffix in ['.pyc', '.pyo'] or src.name == '.DS_Store':
+                continue
             if src.is_symlink():
                 raise ValueError("source template contains a symbolic link")
             if src.is_file():
                 payload[Path('.engineering') / src.relative_to(SOURCE)] = src.read_bytes()
-    for script in ['check.py', 'verify.py']:
+    for script in ['check.py', 'verify.py', 'project_contract.py', 'process_runner.py', 'evidence.py']:
         payload[Path('.engineering/tools') / script] = (SOURCE / 'tools' / script).read_bytes()
     profile = json.loads((SOURCE / 'templates/project.json').read_text())
     profile.update(project_name=name.strip(), playbook_version=version)
@@ -45,7 +47,7 @@ def bootstrap(destination, name, no_agent_entry=False):
         payload[Path('README.md')] = f"# {name.strip()}\n\n研发治理骨架已接入，尚未建立业务应用。先读[研发规范入口](.engineering/README.md)，完成项目适配后再实施。\n\n[工程知识](docs/README.md)\n".encode()
     if not (dest / 'docs/README.md').exists():
         payload[Path('docs/README.md')] = b'# Project knowledge\n\nDocument architecture, business flows, API, data, permissions and operations here. No implementation is assumed yet.\n'
-    manifest = {'playbook_version': version, 'files': {str(p): hashlib.sha256(data).hexdigest() for p, data in sorted(payload.items())}}
+    manifest = {'manifest_schema': 1, 'playbook_version': version, 'files': {str(p): hashlib.sha256(data).hexdigest() for p, data in sorted(payload.items())}}
     payload[Path('.engineering/manifest.json')] = (json.dumps(manifest, indent=2) + '\n').encode()
     # Refuse any existing governance pack or destination collision before writing anything.
     if (dest / '.engineering').exists():

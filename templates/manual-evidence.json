@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "kind": "manual",
+  "run_id": "REPLACE_RUN_ID",
+  "purpose": "待填写：验收目的",
+  "result": "not-run",
+  "started_at": "待填写：含时区ISO时间",
+  "finished_at": "待填写：含时区ISO时间",
+  "source": {"revision": "待填写", "fingerprint": "待填写：对应source_state计算结果"},
+  "spec_sha256": "待填写：本次规格文件摘要",
+  "environment": {"classification": "test", "label": "待填写"},
+  "reviewer": "待填写：责任人或角色",
+  "steps": ["待填写：可重复操作步骤"],
+  "observed": "待填写：实际观察结果",
+  "limitations": "待填写：未覆盖项"
+}
