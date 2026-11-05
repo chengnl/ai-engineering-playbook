@@ -46,10 +46,9 @@ class PagingTests(unittest.TestCase):
     cfg=json.loads((root/'.engineering/project.json').read_text())
     cfg.update(status='ready',business_description='A synthetic read-scope and paging teaching fixture; not an HTTP service',stack={'backend':{'technology':'Python 3 standard library CLI fixture'},'frontend':{'technology':'none','reason':'No Web interface in this teaching project'},'database':{'technology':'none','reason':'All records are synthetic in-memory values'}},source_paths=['src','tests'],business_boundaries=['Only synthetic owner IDs; no real accounts, database, network or paid model'],environment={'classification':'test','label':'isolated-sdd-demo','production_access':'forbidden'},environment_policy='Run only in this caller-owned synthetic project directory',git_policy='No automated Git changes or publication',ci_policy='Manual local execution only',test_resource_cleanup='Caller owns demo directory; tests use memory only and temporary integration callers remove their root',checks={'offline':[check_command('scope-tests','test_access.py')],'regression':[check_command('paging-tests','test_paging.py')]})
     (root/'.engineering/project.json').write_text(json.dumps(cfg,ensure_ascii=False,indent=2))
-    (root/'docs/README.md').write_text('# Teaching fixture knowledge\n\nOnly managed synthetic records are returned; empty scope returns nothing. Page size is normalized to 1..50. This is not production authorization or HTTP validation.\n')
     feature=root/'specs/changes/scoped-list';bugfix=root/'specs/changes/page-size'
-    (feature/'spec.md').write_text('# Scoped synthetic list\nR-01 Only managed owner IDs appear.\nR-02 Empty scope returns no records.\nA-01/A-02 execute the two AccessTests.\nDesign: pure filtering, no persistence or public HTTP.\n')
-    (bugfix/'spec.md').write_text('# Page-size bug fix\nR-01 Zero/negative sizes normalize to one, sizes over fifty normalize to fifty.\nReproduce with test_zero_and_negative_normalized, then repair and rerun.\nNo API, database or production changes.\n')
+    (feature/'spec.md').write_text('# Scoped synthetic list\nR-01 Only managed owner IDs appear.\nR-02 Empty scope returns no records.\nA-01/A-02 execute the two AccessTests.\nDesign: pure filtering, no persistence or public HTTP.\nBusiness review: restrict synthetic owner scope; no real-account decisions. Product review: empty scope is an explicit empty result. Technical review: pure function with allow/deny regressions. Recommendation: minimal filter; validate with AccessTests, no framework or remote dependency.\n')
+    (bugfix/'spec.md').write_text('# Page-size bug fix\nR-01 Zero/negative sizes normalize to one, sizes over fifty normalize to fifty.\nReproduce with test_zero_and_negative_normalized, then repair and rerun.\nNo API, database or production changes.\nBusiness review: preserve the bounded list contract. Product review: invalid page sizes normalize consistently. Technical review: local clamp and failing-then-passing regression. Recommendation: minimal fix, no new service or persistence.\n')
     # First establish a real failing regression, keep its failed evidence as historical facts.
     failed=run_checks(root,'regression','specs/changes/page-size/evidence','specs/changes/page-size/spec.md')
     if failed!=1:
@@ -71,6 +70,12 @@ class PagingTests(unittest.TestCase):
         if errors:raise RuntimeError('; '.join(errors))
         (directory/'acceptance.md').write_text('# Actual teaching acceptance\n\nCommands executed on synthetic data only. Structured evidence links appear in change.json. A completed record proves these fixture commands passed, not real HTTP/database/production security.\n')
         completed.append(str(target.relative_to(root)))
+    # Integrate final knowledge without replacing the category navigation or inventing a second spec.
+    entry = root/'docs/README.md'
+    categories = entry.read_text().split('## 分类入口', 1)[1]
+    entry.write_text('# Teaching fixture knowledge\n\nOnly a synthetic CLI fixture is implemented; this is not production authorization or an HTTP application. Current behavior is documented under modules.\n\n## 分类入口' + categories)
+    (root/'docs/modules/README.md').write_text('# Teaching module knowledge\n\n[Synthetic scoped list and page size](scoped-list.md)\n\n[Knowledge entry](../README.md)\n')
+    (root/'docs/modules/scoped-list.md').write_text('# Synthetic scoped list and page size\n\nOnly managed synthetic owner IDs are returned; empty scope returns nothing. Page size is normalized to 1..50. These are pure functions, not real HTTP/database authorization. Original reproduction and failed/passed evidence remain under specs/changes, not duplicated as current knowledge.\n')
     print(json.dumps({'project':str(root),'completed_demo_changes':completed,'business_application':False},ensure_ascii=False))
     return root
 

@@ -12,7 +12,7 @@ python3 examples/complete/run_demo.py --destination ../playbook-teaching-demo
 2. 修复案例：先运行页大小回归并确认失败，保留失败记录；修复zero/negative后重跑通过。
 3. 每次执行自动保存命令、时间、环境、源码/配置指纹、规格摘要和返回结果。
 4. 两个变更分别建立completed追踪，仅引用真实passed记录；使用同一项目上下文检查当前源码与规格绑定。
-5. 将最终行为写回生成项目docs/README.md，保留修复前失败证据而不当成当前通过。
+5. 将最终行为整合到生成项目docs/modules/scoped-list.md，并维护模块及总入口索引，保留修复前失败证据而不当成当前通过。
 
 示例第一次出现测试FAIL是受控复现步骤，不代表最终示例失败。工具最后返回0才代表闭环成功；目标目录保留供阅读，用户可在确认仅属演示后删除。仓库回归在TemporaryDirectory中运行同一流程，结束自动清理。
 
@@ -24,3 +24,5 @@ python3 .engineering/tools/check.py --project . --trace specs/changes/page-size/
 ```
 
 后续修改src/tests或project.json会使旧证据过期，需要真实重跑对应检查；修改spec.md也会使旧规格摘要失效。记录不是签名，不能抵御有意伪造，仍需责任人评审。
+
+示例规格含业务/产品/技术审视和最小推荐；这是已声明的教学设计，不是脚本自动评判方案质量。现行知识与变更证据分开，根入口不再用历史流水覆盖分类导航。

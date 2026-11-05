@@ -34,6 +34,10 @@ def stop_process(process, grace):
         except ProcessLookupError:
             process.wait()
             return 'graceful'
+        except PermissionError:
+            # A denied liveness probe is not evidence of exit. Recheck only within
+            # the existing grace; final signal denial still fails explicitly.
+            pass
         time.sleep(min(0.05, max(0, deadline - time.monotonic())))
     try:
         os.killpg(process.pid, signal.SIGKILL)
@@ -58,7 +62,13 @@ def execute(command, project):
             record['result'] = 'passed' if record['returncode'] == 0 else 'failed'
         except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
             record['result'] = 'timed-out' if isinstance(error, subprocess.TimeoutExpired) else 'interrupted'
-            record['termination'] = stop_process(process, command.get('grace_seconds', 3))
-            record['returncode'] = process.returncode
+            try:
+                record['termination'] = stop_process(process, command.get('grace_seconds', 3))
+                record['returncode'] = process.returncode
+            except OSError as failure:
+                # Keep the run failed/unknown, but allow the reviewed cleanup and
+                # residual hooks to run. Never infer remote/descendant termination.
+                record.update(result='termination-failed', termination='unconfirmed',
+                              termination_error=type(failure).__name__, returncode=process.poll())
     record.update(finished_at=utc_now(), duration_seconds=round(time.monotonic() - clock, 6))
     return record

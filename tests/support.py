@@ -15,7 +15,7 @@ def command(code='pass', identifier='offline-tests'):
 def project(root):
     root = Path(root)
     (root / '.engineering/standards').mkdir(parents=True, exist_ok=True)
-    for name in ['collaboration', 'testing', 'security-operations']:
+    for name in ['collaboration', 'testing', 'security-operations', 'documentation']:
         (root / '.engineering/standards' / (name + '.md')).write_text('# Synthetic fixture standard\n')
     (root / 'src').mkdir(exist_ok=True)
     (root / 'src/logic.py').write_text('VALUE = 1\n')
