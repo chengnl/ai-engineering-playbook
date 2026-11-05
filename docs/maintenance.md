@@ -2,6 +2,15 @@
 
 采用时记录VERSION和来源Git提交/tag，manifest保留初始复制文件摘要，不是自动升级器。项目可适配规则，例外写明rule/reason/scope/risk/compensation/review_condition。
 
+## v0.2 → v0.3迁移
+
+项目/追踪schema仍为2，已有结构化证据格式不变；不要为升级把历史结果重写为本轮通过。
+
+1. 在独立空目录生成0.3包，对比原包、本地适配与新规范。bootstrap仍拒绝覆盖既有.engineering，不自动更新目标项目。
+2. 合并documentation规范、协作COL-11～14、SDD/开发/发布流程及AGENTS/规格/ADR/验收/发布模板。项目采用的applicable_standards按需补documentation并更新采用版本；原技术约束和授权不放宽。
+3. 盘点既有docs，保持唯一当前主题，人工归类/修正索引与历史替代关系。新目录模板可参考，禁止自动重排已有文档或生成假业务正文。
+4. bootstrap新增docs模板处理；process_runner补充退出存活探测临时拒绝和持续拒绝的失败/清理边界，需一起审阅升级。项目及证据结构契约未改。review实际diff、文件链接及适用回归，记录语义/目录/方案审视仍需人工，不宣称新增自动门禁。
+
 ## v0.1 → v0.2迁移
 
 这是显式契约升级，不能只将版本号改为0.2.0：

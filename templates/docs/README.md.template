@@ -1,0 +1,27 @@
+# 工程知识入口
+
+治理目录已初始化，尚未建立业务应用或验证任何业务能力。按实际项目裁剪分类并逐步编写当前主题，不需要的分类可删除并同步此索引。
+
+## 分类入口
+
+| 目录 | 用途 |
+|---|---|
+| [modules/](modules/README.md) | 功能模块与业务逻辑 |
+| [ai/](ai/README.md) | 模型与提示词规则 |
+| [operations/](operations/README.md) | 开发验证与运维指南 |
+| [guides/](guides/README.md) | 用户操作指南 |
+| [experiments/](experiments/README.md) | 实验与评测 |
+| [architecture/](architecture/README.md) | 架构决策与治理 |
+| [plans/](plans/README.md) | 设计与实施记录 |
+| [acceptance/](acceptance/README.md) | 测试与验收记录 |
+| [releases/](releases/README.md) | Git集成与发布范围 |
+| [deployment/](deployment/README.md) | 环境执行记录 |
+| [incidents/](incidents/README.md) | 故障分析记录 |
+
+## 阅读与维护
+
+项目需要跨模块总览、API、数据库或权限说明时再创建稳定入口，不为不适用技术栈编造文档。当前主题描述最终有效实现，直接整合更新；历史设计、验收、发布保留当时事实，并注明替代日期/原因/现行链接。
+
+每轮完成及合并前清理本轮重复、矛盾、过时描述与失效引用，复查实际diff是否符合工程约定。发布、里程碑或方案替代做阶段性人工知识复查；小变更可合在验收记录，不增加冗余审批。
+
+业务/产品/技术审视及综合推荐先于方案实施；目标工程的具体规则和授权仍由项目确认。详见[文档治理](../.engineering/standards/documentation.md)与[协作规范](../.engineering/standards/collaboration.md)。凭据、真实数据和运行产物不进入知识正文。

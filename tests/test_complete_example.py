@@ -18,5 +18,8 @@ class CompleteExampleTests(unittest.TestCase):
                 self.assertEqual('completed',data['status'])
             results=[json.loads(p.read_text())['result'] for p in (project/'specs/changes/page-size/evidence').glob('*.json')]
             self.assertIn('failed',results);self.assertIn('passed',results)
+            self.assertTrue((project/'docs/modules/scoped-list.md').exists())
+            self.assertIn('modules/README.md', (project/'docs/README.md').read_text())
+            self.assertIn('scoped-list.md', (project/'docs/modules/README.md').read_text())
             with self.assertRaises(ValueError):demo.run_demo(project)
         self.assertFalse(Path(temporary).exists())

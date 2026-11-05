@@ -23,6 +23,11 @@ def bootstrap(destination, name, no_agent_entry=False):
     ensure_no_links(dest)
     if dest.exists() and not dest.is_dir():
         raise ValueError("destination is not a directory")
+    docs_directory = dest / 'docs'
+    ensure_no_links(docs_directory)
+    if docs_directory.exists() and not docs_directory.is_dir():
+        raise ValueError("docs destination is not a directory")
+    existing_docs = docs_directory.exists()
     version = (SOURCE / 'VERSION').read_text().strip()
     payload = {}
     for folder in ['standards', 'workflows', 'templates', 'adapters']:
@@ -45,8 +50,23 @@ def bootstrap(destination, name, no_agent_entry=False):
     # Existing project README/knowledge entry remain byte-for-byte intact.
     if not (dest / 'README.md').exists():
         payload[Path('README.md')] = f"# {name.strip()}\n\n研发治理骨架已接入，尚未建立业务应用。先读[研发规范入口](.engineering/README.md)，完成项目适配后再实施。\n\n[工程知识](docs/README.md)\n".encode()
-    if not (dest / 'docs/README.md').exists():
-        payload[Path('docs/README.md')] = b'# Project knowledge\n\nDocument architecture, business flows, API, data, permissions and operations here. No implementation is assumed yet.\n'
+    if not existing_docs:
+        docs_templates = SOURCE / 'templates/docs'
+        templates = sorted(docs_templates.rglob('*.md.template'))
+        if not templates or not (docs_templates / 'README.md.template').is_file():
+            raise ValueError("knowledge directory templates are missing")
+        for template in templates:
+            if template.is_symlink():
+                raise ValueError("source knowledge template contains a symbolic link")
+            relative = template.relative_to(docs_templates).with_suffix('')
+            payload[Path('docs') / relative] = template.read_bytes()
+    elif not (docs_directory / 'README.md').exists():
+        # Existing documentation is never moved or supplemented with assumed categories.
+        payload[Path('docs/README.md')] = (
+            '# 工程知识入口\n\n既有docs内容已保留，未自动分类或迁移。'
+            '适配时确认唯一现行主题、分类索引和历史替代关系；新项目目录模板在.engineering/templates/docs。\n\n'
+            '[文档维护规范](../.engineering/standards/documentation.md)\n'
+        ).encode()
     manifest = {'manifest_schema': 1, 'playbook_version': version, 'files': {str(p): hashlib.sha256(data).hexdigest() for p, data in sorted(payload.items())}}
     payload[Path('.engineering/manifest.json')] = (json.dumps(manifest, indent=2) + '\n').encode()
     # Refuse any existing governance pack or destination collision before writing anything.

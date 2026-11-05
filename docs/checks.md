@@ -42,7 +42,7 @@ python3 .engineering/tools/check.py --docs .engineering --trace specs/changes/fe
 
 ## 自动化状态
 
-| 项目 | v0.2状态 |
+| 项目 | 当前状态 |
 |---|---|
 | 项目结构就绪、文件链接、有限追踪与证据绑定 | 已实现 |
 | 初始化不覆盖、回滚、版本与缓存排除 | 已实现 |
@@ -51,3 +51,10 @@ python3 .engineering/tools/check.py --docs .engineering --trace specs/changes/fe
 | 前端迟到响应与dispose示例 | 可运行Node夹具；不代替应用浏览器验证 |
 | PostgreSQL隔离入口 | 已实现保护和生命周期；真实库运行需显式启用 |
 | CI/分支保护/审批/生产发布、证据真实性 | 未自动实现，仍按项目与用户授权 |
+
+
+关闭过程持续权限拒绝或无法确认退出时，execution记录termination-failed/unconfirmed，仍尝试已声明清理/残留hook；即使hook通过，整体也不能通过。不能据此保证外部服务或未知后代已停止，须人工按资源归属核查。
+
+## 文档治理覆盖
+
+bootstrap在新docs中生成带未实现声明的分类索引，既有docs不改动；这是结构初始化，相关安全/兼容有离线回归。check.py仍只检查有限的Markdown文件目标，不校验全部标题锚点、目录/命名、过时语义或方案质量。三视角审视、现行知识整合、合并前重复/矛盾清理、实际diff规范复查及阶段性知识审计由流程和模板要求人工执行，不是自动CI、定时巡检或独立审批。

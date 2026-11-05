@@ -132,6 +132,23 @@ class ResourceLifecycleTests(unittest.TestCase):
     def test_residual_failure_cannot_pass(self):
         self.assertEqual(1, self.run_command('pass', residual='raise SystemExit(6)'))
 
+    def test_unconfirmed_shutdown_still_runs_hooks_and_cannot_pass(self):
+        from unittest.mock import patch
+        import process_runner
+        original = process_runner.stop_process
+        def denied_after_test_child_exit(process, grace):
+            original(process, grace)  # This synthetic test never leaks a running child.
+            raise PermissionError('synthetic unconfirmed shutdown')
+        with patch.object(process_runner, 'stop_process', denied_after_test_child_exit):
+            self.assertEqual(1, self.run_command("from pathlib import Path; import time; Path('owned.resource').write_text('synthetic'); time.sleep(30)", timeout=1))
+        self.assertFalse((self.root / 'owned.resource').exists())
+        record = json.loads(next((self.root / 'var/check-evidence').glob('*.json')).read_text())
+        self.assertEqual('termination-failed', record['execution']['result'])
+        self.assertEqual('unconfirmed', record['execution']['termination'])
+        self.assertEqual('passed', record['resources']['cleanup']['result'])
+        self.assertEqual('passed', record['resources']['residual_check']['result'])
+        self.assertNotEqual('passed', record['result'])
+
     def test_missing_executable_still_runs_hooks(self):
         from support import write
         self.cfg['checks']['offline'][0].update(argv=['/definitely/not/a/real/program'], resources={'mode':'isolated','ownership':'test-owned marker','cleanup':{'argv':[sys.executable,'-c',"from pathlib import Path; Path('cleanup.ran').touch()"],'timeout_seconds':3},'residual_check':{'argv':[sys.executable,'-c','pass'],'timeout_seconds':3}})
@@ -195,6 +212,36 @@ class EvidenceTests(unittest.TestCase):
     def test_wrong_check_id_and_placeholder_requirement_rejected(self):
         self.evidence();self.data['acceptance'][0]['evidence'][0]['check_id']='different';self.assertTrue(self.errors())
         self.data['requirements'][0]['text']='待填写';self.assertTrue(self.errors())
+
+
+class ProcessProbeTests(unittest.TestCase):
+    @unittest.skipIf(sys.platform == 'win32', 'POSIX group liveness probe')
+    def test_transient_probe_denial_waits_for_confirmed_exit(self):
+        from unittest.mock import Mock, patch
+        import process_runner
+        process = Mock(pid=12345)
+        process.poll.return_value = 0
+        with patch.object(process_runner.os, 'killpg', side_effect=[None, PermissionError(), ProcessLookupError()]) as kill:
+            self.assertEqual('graceful', process_runner.stop_process(process, 1))
+        self.assertEqual(3, kill.call_count)
+        process.wait.assert_called_once()
+
+    @unittest.skipIf(sys.platform == 'win32', 'POSIX group signal authorization')
+    def test_probe_and_final_signal_denial_never_report_graceful_exit(self):
+        from unittest.mock import Mock, patch
+        import process_runner
+        process = Mock(pid=12345)
+        process.poll.return_value = None
+        # Initial TERM is allowed. Repeated probe denial and denied final KILL
+        # cannot be converted into a successful shutdown.
+        def deny_after_term(_pid, signum):
+            import signal
+            if signum != signal.SIGTERM:
+                raise PermissionError('synthetic denial')
+        with patch.object(process_runner.os, 'killpg', side_effect=deny_after_term), patch.object(process_runner.time, 'monotonic', side_effect=[0, 0, 0, 2]):
+            with self.assertRaises(PermissionError):
+                process_runner.stop_process(process, 1)
+        process.wait.assert_not_called()
 
 
 class InterruptAndDriftTests(unittest.TestCase):

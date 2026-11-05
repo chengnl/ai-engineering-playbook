@@ -1,23 +1,45 @@
 {
   "schema_version": 2,
   "project_name": "REPLACE_PROJECT_NAME",
-  "playbook_version": "0.2.0",
+  "playbook_version": "0.3.0",
   "status": "needs-adaptation",
   "business_description": "待填写：项目目标与实际业务",
   "stack": {
-    "backend": {"technology": "待确认"},
-    "frontend": {"technology": "待确认"},
-    "database": {"technology": "待确认"}
+    "backend": {
+      "technology": "待确认"
+    },
+    "frontend": {
+      "technology": "待确认"
+    },
+    "database": {
+      "technology": "待确认"
+    }
   },
-  "applicable_standards": ["collaboration", "testing", "security-operations"],
+  "applicable_standards": [
+    "collaboration",
+    "testing",
+    "security-operations",
+    "documentation"
+  ],
   "source_paths": [],
   "knowledge_entry": "docs/README.md",
-  "business_boundaries": ["待补：业务范围、角色与数据范围、保留行为"],
-  "environment": {"classification": "test", "label": "待确认", "production_access": "forbidden"},
+  "business_boundaries": [
+    "待补：业务范围、角色与数据范围、保留行为"
+  ],
+  "environment": {
+    "classification": "test",
+    "label": "待确认",
+    "production_access": "forbidden"
+  },
   "environment_policy": "待补：开发/测试/生产访问与操作授权，不填写凭据",
   "git_policy": "待补：分支、评审、提交/推送/合并授权",
   "ci_policy": "待补：自动/手工/本地检查",
   "test_resource_cleanup": "待补：隔离资源命名、清理及复查",
   "exceptions": [],
-  "checks": {"offline": [], "database": [], "browser": [], "release-tools": []}
+  "checks": {
+    "offline": [],
+    "database": [],
+    "browser": [],
+    "release-tools": []
+  }
 }
